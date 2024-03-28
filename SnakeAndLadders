@@ -1,0 +1,292 @@
+package main
+
+import (
+    "bufio"
+    "fmt"
+    "io"
+    "os"
+    "strconv"
+    "strings"
+)
+
+/*
+ * Complete the 'quickestWayUp' function below.
+ *
+ * The function is expected to return an INTEGER.
+ * The function accepts following parameters:
+ *  1. 2D_INTEGER_ARRAY ladders
+ *  2. 2D_INTEGER_ARRAY snakes
+ */
+ 
+ 
+ type Edge struct {
+    To     *Node
+}
+
+type Node struct {
+    ID    string
+    Edges []*Edge
+}
+
+type Graph struct {
+    Nodes map[string]*Node
+}
+
+func NewGraph() *Graph {
+    return &Graph{
+        Nodes: make(map[string]*Node),
+    }
+}
+
+func (g *Graph) AddNode(id string) {
+    if _, exists := g.Nodes[id]; !exists {
+        g.Nodes[id] = &Node{ID: id, Edges: []*Edge{}}
+    }
+}
+
+func (g *Graph) getNodeEdges(id string) []*Node{
+   var adjacentNodes []*Node
+
+   if _, exists := g.Nodes[id]; exists {
+        for _, edge := range g.Nodes[id].Edges{
+            adjacentNodes = append(adjacentNodes, edge.To)
+        } // Return the edges if the node exists
+    } else {
+        return nil 
+    }
+    return adjacentNodes
+}
+
+func (g *Graph) AddEdge(from, to string) {
+    fromNode, fromExists := g.Nodes[from]
+    toNode, toExists := g.Nodes[to]
+
+    if fromExists && toExists {
+        edgeExists := false
+        for _, edge := range fromNode.Edges {
+            if edge.To == toNode {
+                edgeExists = true
+                break
+            }
+        }
+
+        if !edgeExists {
+            fromNode.Edges = append(fromNode.Edges, &Edge{To: toNode})
+        }
+    }
+}
+
+
+func (g *Graph) FindShortestPathBFS(startID, endID string) ([]string, int) {
+    if g.Nodes[startID] == nil || g.Nodes[endID] == nil {
+        fmt.Println("Start or End node does not exist.")
+        return nil, -1
+    }
+
+    queue := []*Node{g.Nodes[startID]}
+
+    // Visited nodes to prevent revisiting
+    visited := make(map[string]bool)
+    visited[startID] = true
+
+    distance := make(map[string]int)
+    prev := make(map[string]*Node)
+
+    // Initialize distance for the start node
+    distance[startID] = 0
+
+    for len(queue) > 0 {
+        current := queue[0]
+        queue = queue[1:]
+
+        // Path found
+        if current.ID == endID {
+            break
+        }
+
+        for _, edge := range current.Edges {
+            next := edge.To
+            if !visited[next.ID] {
+                queue = append(queue, next)
+                visited[next.ID] = true
+                distance[next.ID] = distance[current.ID] + 1
+                prev[next.ID] = current
+            }
+        }
+    }
+
+    // Reconstruct path from endID to startID
+    path := make([]string, 0)
+    at := g.Nodes[endID]
+    for at != nil {
+        path = append([]string{at.ID}, path...)
+        if at.ID == startID {
+            break
+        }
+        at = prev[at.ID]
+    }
+
+    // If startID is not at the beginning of the path, no path was found
+    if path[0] != startID {
+        fmt.Println("Could not find path")
+        return nil, -1
+    }
+
+    return path, distance[endID]
+}
+
+
+
+func (g *Graph) RemoveEdge(fromID, toID string) {
+    fromNode, fromExists := g.Nodes[fromID]
+    toNode, toExists := g.Nodes[toID]
+
+    if (!fromExists || !toExists) {
+        return
+    }
+
+    for i, edge := range fromNode.Edges {
+        if edge.To.ID == toNode.ID {
+            fromNode.Edges = append(fromNode.Edges[:i], fromNode.Edges[i+1:]...)
+            return
+        }
+    }
+}
+
+
+func (g *Graph) RemoveAllOutgoingEdges(fromID string) {
+    fromNode, fromExists := g.Nodes[fromID]
+    if !fromExists {
+        return
+    }
+    fromNode.Edges = []*Edge{}
+}
+
+func quickestWayUp(ladders [][]int32, snakes [][]int32) int32 {
+    
+    var board *Graph = NewGraph()
+    
+    for i := 1; i <= 100; i++ {
+        board.AddNode(strconv.Itoa(i))
+    }
+    
+    for i := 1; i < 100; i++ {
+        for j := 1; j <= 6; j ++ {
+            board.AddEdge(strconv.Itoa(i), strconv.Itoa(i + j))
+        }
+    }
+    
+    
+    for i:= range(ladders){
+        board.RemoveAllOutgoingEdges(strconv.FormatInt(int64(ladders[i][0]), 10))
+        board.AddEdge(strconv.FormatInt(int64(ladders[i][0]), 10), strconv.FormatInt(int64(ladders[i][1]), 10))
+    }
+    
+    for i := range(snakes){
+        board.RemoveAllOutgoingEdges(strconv.FormatInt(int64(snakes[i][0]), 10))
+        board.AddEdge(strconv.FormatInt(int64(snakes[i][0]), 10), strconv.FormatInt(int64(snakes[i][1]), 10))
+    }
+
+    result, success := board.FindShortestPathBFS("1", "100")
+
+    if (success == -1){
+        return int32(success)
+    }
+    
+    var moveCounter int32 = 0
+    
+    
+    for _, resultID := range result {
+    adjacentNodes := board.getNodeEdges(resultID)
+    if (resultID != "100" && (len(adjacentNodes) > 1 || resultID == "99")){
+        moveCounter ++
+    }
+}
+    return moveCounter
+
+}
+
+func main() {
+    reader := bufio.NewReaderSize(os.Stdin, 16 * 1024 * 1024)
+
+    stdout, err := os.Create(os.Getenv("OUTPUT_PATH"))
+    checkError(err)
+
+    defer stdout.Close()
+
+    writer := bufio.NewWriterSize(stdout, 16 * 1024 * 1024)
+
+    tTemp, err := strconv.ParseInt(strings.TrimSpace(readLine(reader)), 10, 64)
+    checkError(err)
+    t := int32(tTemp)
+
+    for tItr := 0; tItr < int(t); tItr++ {
+        nTemp, err := strconv.ParseInt(strings.TrimSpace(readLine(reader)), 10, 64)
+        checkError(err)
+        n := int32(nTemp)
+
+        var ladders [][]int32
+        for i := 0; i < int(n); i++ {
+            laddersRowTemp := strings.Split(strings.TrimRight(readLine(reader)," \t\r\n"), " ")
+
+            var laddersRow []int32
+            for _, laddersRowItem := range laddersRowTemp {
+                laddersItemTemp, err := strconv.ParseInt(laddersRowItem, 10, 64)
+                checkError(err)
+                laddersItem := int32(laddersItemTemp)
+                laddersRow = append(laddersRow, laddersItem)
+            }
+
+            if len(laddersRow) != 2 {
+                panic("Bad input")
+            }
+
+            ladders = append(ladders, laddersRow)
+        }
+
+        mTemp, err := strconv.ParseInt(strings.TrimSpace(readLine(reader)), 10, 64)
+        checkError(err)
+        m := int32(mTemp)
+
+        var snakes [][]int32
+        for i := 0; i < int(m); i++ {
+            snakesRowTemp := strings.Split(strings.TrimRight(readLine(reader)," \t\r\n"), " ")
+
+            var snakesRow []int32
+            for _, snakesRowItem := range snakesRowTemp {
+                snakesItemTemp, err := strconv.ParseInt(snakesRowItem, 10, 64)
+                checkError(err)
+                snakesItem := int32(snakesItemTemp)
+                snakesRow = append(snakesRow, snakesItem)
+            }
+
+            if len(snakesRow) != 2 {
+                panic("Bad input")
+            }
+
+            snakes = append(snakes, snakesRow)
+        }
+
+        result := quickestWayUp(ladders, snakes)
+
+        fmt.Fprintf(writer, "%d\n", result)
+    }
+
+    writer.Flush()
+}
+
+func readLine(reader *bufio.Reader) string {
+    str, _, err := reader.ReadLine()
+    if err == io.EOF {
+        return ""
+    }
+
+    return strings.TrimRight(string(str), "\r\n")
+}
+
+func checkError(err error) {
+    if err != nil {
+        panic(err)
+    }
+}
+

@@ -1,0 +1,110 @@
+package main
+
+import (
+    "bufio"
+    "fmt"
+    "io"
+    "os"
+    "strconv"
+    "strings"
+)
+
+/*
+ * Complete the 'nonDivisibleSubset' function below.
+ *
+ * The function is expected to return an INTEGER.
+ * The function accepts following parameters:
+ *  1. INTEGER k
+ *  2. INTEGER_ARRAY s
+ */
+
+
+func nonDivisibleSubset(k int32, s []int32) int32 {
+    remainderCounts := make(map[int32]int32)
+    for _, number := range s {
+        remainder := number % k
+        remainderCounts[remainder]++
+        fmt.Println("Number: ", number,"k: ", k,"remainder: ", remainder)
+    }
+    fmt.Println(remainderCounts)
+    count := min(remainderCounts[0], 1) // Only one number which has property: number%k == 0 can be added to result set 
+
+    for i := int32(1); i <= k/2; i++ {
+        fmt.Println("i: ", i, "remainderCounts[i]: ", remainderCounts[i])
+        if i == k-i { // Handle the case where k is even and i = k/2 ( adding 2 of numbers which have property: number%k == k/2 would make sum of those numbers divisible by k)
+            count += min(remainderCounts[i], 1)
+        } else {
+            count += max(remainderCounts[i], remainderCounts[k-i])
+        }
+    }
+
+    return count
+}
+
+func max(a, b int32) int32 {
+    if a > b {
+        return a
+    }
+    return b
+}
+
+func min(a, b int32) int32 {
+    if a < b {
+        return a
+    }
+    return b
+}
+
+func main() {
+    reader := bufio.NewReaderSize(os.Stdin, 16 * 1024 * 1024)
+
+    stdout, err := os.Create(os.Getenv("OUTPUT_PATH"))
+    checkError(err)
+
+    defer stdout.Close()
+
+    writer := bufio.NewWriterSize(stdout, 16 * 1024 * 1024)
+
+    firstMultipleInput := strings.Split(strings.TrimSpace(readLine(reader)), " ")
+
+    nTemp, err := strconv.ParseInt(firstMultipleInput[0], 10, 64)
+    checkError(err)
+    n := int32(nTemp)
+
+    kTemp, err := strconv.ParseInt(firstMultipleInput[1], 10, 64)
+    checkError(err)
+    k := int32(kTemp)
+
+    sTemp := strings.Split(strings.TrimSpace(readLine(reader)), " ")
+
+    var s []int32
+
+    for i := 0; i < int(n); i++ {
+        sItemTemp, err := strconv.ParseInt(sTemp[i], 10, 64)
+        checkError(err)
+        sItem := int32(sItemTemp)
+        s = append(s, sItem)
+    }
+
+    result := nonDivisibleSubset(k, s)
+
+    fmt.Fprintf(writer, "%d\n", result)
+
+    writer.Flush()
+}
+
+func readLine(reader *bufio.Reader) string {
+    str, _, err := reader.ReadLine()
+    if err == io.EOF {
+        return ""
+    }
+
+    return strings.TrimRight(string(str), "\r\n")
+}
+
+func checkError(err error) {
+    if err != nil {
+        panic(err)
+    }
+}
+
