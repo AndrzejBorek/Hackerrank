@@ -1,0 +1,179 @@
+package main
+
+import (
+    "bufio"
+    "fmt"
+    "io"
+    "os"
+    "strconv"
+    "strings"
+)
+
+/*
+ * Complete the 'journeyToMoon' function below.
+ *
+ * The function is expected to return an INTEGER.
+ * The function accepts following parameters:
+ *  1. INTEGER n
+ *  2. 2D_INTEGER_ARRAY astronaut
+ */
+ 
+
+
+type Node struct {
+    ID    int32
+    Edges []*Node
+}
+
+type Graph struct {
+    Nodes map[int32]*Node
+}
+
+func NewGraph() *Graph {
+    return &Graph{
+        Nodes: make(map[int32]*Node),
+    }
+}
+
+func (g *Graph) AddNode(id int32) {
+    if _, exists := g.Nodes[id]; !exists {
+        g.Nodes[id] = &Node{ID: id, Edges: []*Node{}}
+    }
+}
+
+func (g *Graph) AddEdge(from, to int32) {
+    fromNode, fromExists := g.Nodes[from]
+    toNode, toExists := g.Nodes[to]
+
+    if fromExists && toExists && from != to {
+        edgeExists := false
+        for _, edge := range fromNode.Edges {
+            if edge == toNode {
+                edgeExists = true
+                break
+            }
+        }
+
+        if !edgeExists {
+            fromNode.Edges = append(fromNode.Edges, toNode)
+            toNode.Edges = append(toNode.Edges, fromNode) 
+        }
+    }
+}
+
+func (g *Graph) DFSUtil(v int32, visited []bool) int32 {
+    nodeCount := int32(1)
+    visited[v] = true;
+    for _, edge := range g.Nodes[v].Edges {
+            if (!visited[edge.ID]){
+                nodeCount += g.DFSUtil(edge.ID, visited)
+        }
+    }
+    return nodeCount 
+}
+
+func (g *Graph) connectedComponents() (result []int32){
+    
+    var visited = make([]bool, len(g.Nodes))   
+    for  v := 0; v < len(g.Nodes); v++{
+        visited[v] = false;
+    }
+    
+    
+    for v := int32(0); v < int32(len(g.Nodes)); v++{
+         
+        if (visited[v] == false) {
+            nodeCount := g.DFSUtil(v, visited)
+            result =append(result, nodeCount)
+        }
+    }
+    
+    return 
+}
+
+
+
+func journeyToMoon(n int32, astronaut [][]int32) int64 {
+    journey := NewGraph()
+    
+    for i := int32(0); i < n; i++{
+        journey.AddNode(i)
+    }
+    
+    for _, pair := range(astronaut){
+        journey.AddEdge(pair[0], pair[1])
+    }
+    
+    resultArray := journey.connectedComponents();
+    var result int64
+    
+    for i := 0; i < len(resultArray); i++{
+        for j:= i+1; j < len(resultArray); j++{
+            result += int64(resultArray[i] * resultArray[j])
+        }
+    }
+
+    return result
+}
+
+func main() {
+    reader := bufio.NewReaderSize(os.Stdin, 16 * 1024 * 1024)
+
+    stdout, err := os.Create(os.Getenv("OUTPUT_PATH"))
+    checkError(err)
+
+    defer stdout.Close()
+
+    writer := bufio.NewWriterSize(stdout, 16 * 1024 * 1024)
+
+    firstMultipleInput := strings.Split(strings.TrimSpace(readLine(reader)), " ")
+
+    nTemp, err := strconv.ParseInt(firstMultipleInput[0], 10, 64)
+    checkError(err)
+    n := int32(nTemp)
+
+    pTemp, err := strconv.ParseInt(firstMultipleInput[1], 10, 64)
+    checkError(err)
+    p := int32(pTemp)
+
+    var astronaut [][]int32
+    for i := 0; i < int(p); i++ {
+        astronautRowTemp := strings.Split(strings.TrimRight(readLine(reader)," \t\r\n"), " ")
+
+        var astronautRow []int32
+        for _, astronautRowItem := range astronautRowTemp {
+            astronautItemTemp, err := strconv.ParseInt(astronautRowItem, 10, 64)
+            checkError(err)
+            astronautItem := int32(astronautItemTemp)
+            astronautRow = append(astronautRow, astronautItem)
+        }
+
+        if len(astronautRow) != 2 {
+            panic("Bad input")
+        }
+
+        astronaut = append(astronaut, astronautRow)
+    }
+
+    result := journeyToMoon(n, astronaut)
+
+    fmt.Fprintf(writer, "%d\n", result)
+
+    writer.Flush()
+}
+
+func readLine(reader *bufio.Reader) string {
+    str, _, err := reader.ReadLine()
+    if err == io.EOF {
+        return ""
+    }
+
+    return strings.TrimRight(string(str), "\r\n")
+}
+
+func checkError(err error) {
+    if err != nil {
+        panic(err)
+    }
+}
+
