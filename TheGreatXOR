@@ -21,7 +21,6 @@ func theGreatXor(x int64) (result int64) {
 
     binary := strconv.FormatInt(x, 2)
     
-    // Okey, I did needed to wrap my head around it for a little bit.
     // So for loop is looping over change of position in binary number. Loop start from 1 instead of 0 because of requirement: 
     // 0 < a < x. The same reason why looping stops at len(binary) - 1
     // Looping starts with <leading zeroes - their amount is len(binary)-1>1 moved i=0 positions to the left. So binary representation of number '1' 
