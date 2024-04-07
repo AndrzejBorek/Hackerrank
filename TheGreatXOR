@@ -1,0 +1,106 @@
+package main
+
+import (
+    "bufio"
+    "fmt"
+    "io"
+    "os"
+    "strconv"
+    "strings"
+)
+
+/*
+ * Complete the 'theGreatXor' function below.
+ *
+ * The function is expected to return a LONG_INTEGER.
+ * The function accepts LONG_INTEGER x as parameter.
+ */
+
+func theGreatXor(x int64) (result int64) {
+    
+
+    binary := strconv.FormatInt(x, 2)
+    
+    // Okey, I did needed to wrap my head around it for a little bit.
+    // So for loop is looping over change of position in binary number. Loop start from 1 instead of 0 because of requirement: 
+    // 0 < a < x. The same reason why looping stops at len(binary) - 1
+    // Looping starts with <leading zeroes - their amount is len(binary)-1>1 moved i=0 positions to the left. So binary representation of number '1' 
+    // Then loop checks if logical AND on binary representation of '1' and x will produce 0.  
+    // Since binary '1' has only one number 1 (on position i=0 from right), it means that on position 0 (counting from right) in binary representation of x there is 0. 
+    // If there is 0 there, it means I can create bigger number then x with xor by adding 1 to it (since 1 has '1' at last position in binary representation).
+    
+    // In next iteration, if there is 0 at i=1 from right in x number, then it means I can add 2^1 numbers with 1 on that position (It is either 10 (dec: 2) or 11 (dec:3), so 2 is added to final result.
+    // Looping continue... 
+    // So basically if((x & (1 << i)) == 0) checks if there is 0 on position i in x number. Then based on that position I can add 2^i numbers with 1 on position i and combination of 0 and 1 later
+    
+    
+    for i := 0; i < len(binary); i++ {
+        if (x & (1 << i)) == 0 {
+            result += (1 << i)
+        }
+    }
+        
+    
+
+
+    // Initial try was this: 
+    // wasUsedMap := make(map[int64]bool)
+    // for i := int64(1); i < x; i++{
+    //     if(!wasUsedMap[i]){
+    //         r := i^x
+    //         if(r <= x){
+    //             wasUsedMap[r] = true
+    //         } else {
+    //             result++
+    //         }
+    //     }
+    // }     
+    // I still think solution could be done this way probably with usage of a lot of if's, but I could not find it.
+    // The issue with this approach is also need of creating map, which could consume a lot of memory.
+    // Maybe some checking in x is not equal to 2^n-1 (because then there is 0 '0' in binary representation so there is no solution) 
+    
+    
+    return
+}
+
+func main() {
+    reader := bufio.NewReaderSize(os.Stdin, 16 * 1024 * 1024)
+
+    stdout, err := os.Create(os.Getenv("OUTPUT_PATH"))
+    checkError(err)
+
+    defer stdout.Close()
+
+    writer := bufio.NewWriterSize(stdout, 16 * 1024 * 1024)
+
+    qTemp, err := strconv.ParseInt(strings.TrimSpace(readLine(reader)), 10, 64)
+    checkError(err)
+    q := int32(qTemp)
+
+    for qItr := 0; qItr < int(q); qItr++ {
+        x, err := strconv.ParseInt(strings.TrimSpace(readLine(reader)), 10, 64)
+        checkError(err)
+
+        result := theGreatXor(x)
+
+        fmt.Fprintf(writer, "%d\n", result)
+    }
+
+    writer.Flush()
+}
+
+func readLine(reader *bufio.Reader) string {
+    str, _, err := reader.ReadLine()
+    if err == io.EOF {
+        return ""
+    }
+
+    return strings.TrimRight(string(str), "\r\n")
+}
+
+func checkError(err error) {
+    if err != nil {
+        panic(err)
+    }
+}
+
