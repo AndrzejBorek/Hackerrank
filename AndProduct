@@ -1,0 +1,75 @@
+package main
+
+import (
+    "bufio"
+    "fmt"
+    "io"
+    "os"
+    "strconv"
+    "strings"
+)
+
+/*
+ * Complete the 'andProduct' function below.
+ *
+ * The function is expected to return a LONG_INTEGER.
+ * The function accepts following parameters:
+ *  1. LONG_INTEGER a
+ *  2. LONG_INTEGER b
+ */
+
+func andProduct(a int64, b int64) int64 {
+   
+    var result int64 = a & (a+1)
+    for i := a+2; i <= b; i++{
+        result = result & i
+    }
+    return result
+}
+
+func main() {
+    reader := bufio.NewReaderSize(os.Stdin, 16 * 1024 * 1024)
+
+    stdout, err := os.Create(os.Getenv("OUTPUT_PATH"))
+    checkError(err)
+
+    defer stdout.Close()
+
+    writer := bufio.NewWriterSize(stdout, 16 * 1024 * 1024)
+
+    nTemp, err := strconv.ParseInt(strings.TrimSpace(readLine(reader)), 10, 64)
+    checkError(err)
+    n := int32(nTemp)
+
+    for nItr := 0; nItr < int(n); nItr++ {
+        firstMultipleInput := strings.Split(strings.TrimSpace(readLine(reader)), " ")
+
+        a, err := strconv.ParseInt(firstMultipleInput[0], 10, 64)
+        checkError(err)
+
+        b, err := strconv.ParseInt(firstMultipleInput[1], 10, 64)
+        checkError(err)
+
+        result := andProduct(a, b)
+
+        fmt.Fprintf(writer, "%d\n", result)
+    }
+
+    writer.Flush()
+}
+
+func readLine(reader *bufio.Reader) string {
+    str, _, err := reader.ReadLine()
+    if err == io.EOF {
+        return ""
+    }
+
+    return strings.TrimRight(string(str), "\r\n")
+}
+
+func checkError(err error) {
+    if err != nil {
+        panic(err)
+    }
+}
+
