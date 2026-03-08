@@ -1,0 +1,85 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"os"
+	"strconv"
+	"strings"
+)
+
+/*
+ * Complete the 'kaprekarNumbers' function below.
+ *
+ * The function accepts following parameters:
+ *  1. INTEGER p
+ *  2. INTEGER q
+ */
+
+func divide(n int64) (int64, int64) {
+	var left, right int64
+	switch {
+	case n < 10:
+		left, right = 0, n
+	case n < 100:
+		left, right = n/10, n%10
+	case n < 10000:
+		left, right = n/100, n%100
+	case n < 1000000:
+		left, right = n/1000, n%1000
+	case n < 100000000:
+		left, right = n/10000, n%10000
+	default:
+		left, right = n/100000, n%100000
+	}
+	return left, right
+}
+
+func isModifiedKaprekar(n int32) bool {
+	var left, right int64 = divide(int64(n) * int64(n))
+	return int32(left+right) == n
+}
+
+func kaprekarNumbers(p int32, q int32) {
+	var flag bool = false
+	for i := p; i <= q; i++ {
+		if isModifiedKaprekar(i) {
+			flag = true
+			fmt.Print(i, " ")
+		}
+	}
+	if !flag {
+		fmt.Println("INVALID RANGE")
+	}
+
+}
+
+func main() {
+	reader := bufio.NewReaderSize(os.Stdin, 16*1024*1024)
+
+	pTemp, err := strconv.ParseInt(strings.TrimSpace(readLine(reader)), 10, 64)
+	checkError(err)
+	p := int32(pTemp)
+
+	qTemp, err := strconv.ParseInt(strings.TrimSpace(readLine(reader)), 10, 64)
+	checkError(err)
+	q := int32(qTemp)
+
+	kaprekarNumbers(p, q)
+}
+
+func readLine(reader *bufio.Reader) string {
+	str, _, err := reader.ReadLine()
+	if err == io.EOF {
+		return ""
+	}
+
+	return strings.TrimRight(string(str), "\r\n")
+}
+
+func checkError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
